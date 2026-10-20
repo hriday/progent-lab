@@ -86,6 +86,15 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 1.25rem 6rem; }
 .intro p { max-width: var(--measure); margin: 0 0 1rem; color: var(--ink-soft); }
 .intro p.lead { color: var(--ink); font-size: 1.12rem; }
 
+.epigraph { margin: 1.8rem 0 1.6rem; max-width: var(--measure); padding-left: 1.1rem; border-left: 4px solid var(--allow); }
+.epigraph blockquote { margin: 0; }
+.epigraph blockquote p {
+  margin: 0; font-size: clamp(1.35rem, 2.6vw, 1.75rem); line-height: 1.25; letter-spacing: -0.015em;
+  font-weight: 600; color: var(--ink);
+}
+.epigraph figcaption { margin-top: 0.5rem; font-size: 0.92rem; color: var(--ink-soft); }
+.epigraph cite, footer cite { font-style: normal; }
+
 .finding {
   max-width: var(--measure); margin: 1.6rem 0 0; padding: 0.9rem 1.1rem;
   border-left: 4px solid var(--deny); background: var(--deny-wash);

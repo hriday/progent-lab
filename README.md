@@ -1,8 +1,14 @@
 # Progent, taken apart
 
-An interactive site for understanding **Progent: Securing AI Agents with Privilege Control**
-(Shi, He, Wang, Li, Wu, Guo, Song; [arXiv:2504.11703](https://arxiv.org/abs/2504.11703), v3), running
-against the authors' own code.
+An interactive site for understanding
+[**Progent: Securing AI Agents with Privilege Control**](https://arxiv.org/abs/2504.11703)
+by Tianneng Shi, Jingxuan He, Zhun Wang, Hongwei Li, Linyu Wu, Wenbo Guo and Dawn Song
+(arXiv:2504.11703, v3; [PDF](https://arxiv.org/pdf/2504.11703)), running against the authors' own code.
+
+The paper's central guarantee, in its own words: "the agent's effective action space can only shrink
+without approval". This site lets you watch that guarantee work, and fail.
+
+Live at <https://progent.moosha.org> (password-protected).
 
 - **Walkthrough:** the paper's running example (Figure 1), step by step. It shows the policy gating each
   call, each update classified live, and an action-space map of what the agent may do.
@@ -61,8 +67,10 @@ A 1 GB droplet is enough; 2 GB is more comfortable. Ubuntu 24.04.
    ```sh
    cp .env.example .env
    ./make-password.sh        # prompts for a password, prints the BASIC_AUTH_HASH line
-   nano .env                 # set SITE_DOMAIN, BASIC_AUTH_USER, paste the hash line, add ANTHROPIC_API_KEY
+   nano .env                 # set SITE_DOMAIN, BASIC_AUTH_USER, paste the hash line
    chmod 600 .env
+   # The Anthropic key: one line in .key, readable by the container user (uid 10001) only.
+   nano .key && chown root:10001 .key && chmod 640 .key
    ```
    Keep the single quotes around the hash. Compose reads single-quoted values literally, and the
    hash contains `$`.
@@ -81,7 +89,7 @@ on a read-only filesystem with all capabilities dropped.
 
 | Variable | Needed for |
 |---|---|
-| `ANTHROPIC_API_KEY` | Attack lab. The other three sections work without any key. |
+| `.key` file (or `ANTHROPIC_API_KEY`) | Attack lab. The other three sections work without any key. |
 | `OPENAI_API_KEY` | Optional. Adds `gpt-4o-2024-08-06`, the paper's policy model, to the lab. |
 | `TYPESAFE_API_KEY` | Optional. Enables the Jev update gate (a Noul over the same inputs as the paper's gate prompt). |
 | `AGENT_MODEL`, `POLICY_MODEL` | Model IDs (default `claude-sonnet-5-5`). |
@@ -89,6 +97,23 @@ on a read-only filesystem with all capabilities dropped.
 
 A lab run makes roughly 10–30 model calls. Runs live in process memory, which is why the server uses
 a single worker and runs disappear on restart.
+
+## Citation
+
+```bibtex
+@article{shi2025progent,
+  title   = {Progent: Securing AI Agents with Privilege Control},
+  author  = {Shi, Tianneng and He, Jingxuan and Wang, Zhun and Li, Hongwei and
+             Wu, Linyu and Guo, Wenbo and Song, Dawn},
+  journal = {arXiv preprint arXiv:2504.11703},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2504.11703}
+}
+```
+
+## License
+
+MIT (see `LICENSE`). The vendored reference implementation keeps its own MIT license.
 
 ## Local development
 

@@ -16,6 +16,23 @@ from .policy_format import PolicyFormatError, normalize
 from .scenarios import SCENARIOS, public_catalog
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
+
+
+def _load_secret_files() -> None:
+    """Read keys from mounted files (Docker secrets) when they are not in the environment.
+
+    Keeps keys out of .env and out of `docker inspect`. File names follow the variable names.
+    """
+    secrets_dir = Path(os.getenv("SECRETS_DIR", "/run/secrets"))
+    for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "TYPESAFE_API_KEY"):
+        f = secrets_dir / var.lower()
+        if not os.getenv(var) and f.is_file():
+            value = f.read_text().strip()
+            if value:
+                os.environ[var] = value
+
+
+_load_secret_files()
 MAX_BODY = 64 * 1024
 
 app = FastAPI(title="Progent explorer", docs_url=None, redoc_url=None, openapi_url=None)

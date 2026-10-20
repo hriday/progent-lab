@@ -31,6 +31,16 @@
       policy between an agent and its tools. Every tool call is checked against symbolic allow/forbid rules over
       the tool's name and arguments, and anything unmatched is denied.
     </p>
+    <figure class="epigraph">
+      <blockquote cite="https://arxiv.org/abs/2504.11703">
+        <p>&ldquo;the agent's effective action space can only shrink without approval&rdquo;</p>
+      </blockquote>
+      <figcaption>
+        The paper's central guarantee, from the abstract of
+        <a href="https://arxiv.org/abs/2504.11703"><cite>Progent: Securing AI Agents with Privilege Control</cite></a>
+        (<a href="https://arxiv.org/pdf/2504.11703">PDF</a>)
+      </figcaption>
+    </figure>
     <p>
       An LLM writes the first policy from the user's task, which is trusted, then proposes updates as tool results
       arrive, which are not. Z3 classifies each update: a narrowing is applied automatically, an expansion needs
@@ -200,10 +210,23 @@
 
 <footer>
   <p>
-    Paper: Tianneng Shi, Jingxuan He, Zhun Wang, Hongwei Li, Linyu Wu, Wenbo Guo, Dawn Song, "Progent: Securing AI
-    Agents with Privilege Control", arXiv:2504.11703v3. Reference code:
+    Paper: Tianneng Shi, Jingxuan He, Zhun Wang, Hongwei Li, Linyu Wu, Wenbo Guo and Dawn Song.
+    <a href="https://arxiv.org/abs/2504.11703"><cite>Progent: Securing AI Agents with Privilege Control</cite></a>.
+    arXiv:2504.11703, version 3 (<a href="https://arxiv.org/pdf/2504.11703">PDF</a>). Reference code:
     <a href="https://github.com/sunblaze-ucb/progent">sunblaze-ucb/progent</a> (MIT), vendored unmodified.
   </p>
+  <details>
+    <summary>Cite the paper</summary>
+    <pre>@article{shi2025progent,
+  title   = {Progent: Securing AI Agents with Privilege Control},
+  author  = {Shi, Tianneng and He, Jingxuan and Wang, Zhun and Li, Hongwei and
+             Wu, Linyu and Guo, Wenbo and Song, Dawn},
+  journal = {arXiv preprint arXiv:2504.11703},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2504.11703}
+}</pre>
+  </details>
+  <p>This site's source: <a href="https://github.com/hriday/progent-lab">github.com/hriday/progent-lab</a> (MIT).</p>
   <p>The mock workspaces never send mail, money or HTTP requests; attacker success is judged from the calls that executed.</p>
 </footer>
 <script src="/static/app.js" type="module"></script>

@@ -9,6 +9,8 @@ services:
     security_opt: ["no-new-privileges:true"]
     # Not published: only Caddy can reach it.
     expose: ["8000"]
+    # The Anthropic key is read from ./.key (one line), mounted as a file, never in .env.
+    secrets: [anthropic_api_key]
 
   caddy:
     image: caddy:2
@@ -23,6 +25,10 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+
+secrets:
+  anthropic_api_key:
+    file: ./.key
 
 volumes:
   caddy_data:
