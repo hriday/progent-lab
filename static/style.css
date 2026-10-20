@@ -321,3 +321,22 @@ label.field select, label.field input[type="text"] { width: 100%; }
   .steps .nav { margin-left: 0; }
   .lab-side { top: auto; }
 }
+
+/* ------------------------------------------------------------------ login */
+
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem 1rem; }
+.login { width: 100%; max-width: 26rem; }
+.login-mark { margin: 0 0 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+.login h1 { margin: 0 0 1.5rem; font-size: 1.6rem; line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; }
+.login-form {
+  display: grid; gap: 0.5rem;
+  background: var(--raised); border: 1px solid var(--rule); border-radius: 4px; padding: 1.25rem;
+}
+.login-form label { font-size: 0.9rem; color: var(--ink-soft); }
+.login-form input {
+  font: inherit; color: var(--ink); width: 100%;
+  background: var(--ground); border: 1px solid var(--rule); border-radius: 3px; padding: 0.55rem 0.65rem;
+}
+.login-form button { justify-self: start; margin-top: 0.5rem; }
+.login-form .err { margin: 0; color: var(--deny); font-size: 0.9rem; }
+.login-note { margin: 1.25rem 0 0; font-size: 0.88rem; color: var(--muted); }

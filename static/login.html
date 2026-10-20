@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Progent, taken apart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%231c2e4a%27/%3E%3Crect x=%273%27 y=%273%27 width=%276%27 height=%273%27 fill=%27%231f6a57%27/%3E%3Crect x=%273%27 y=%277%27 width=%2710%27 height=%273%27 fill=%27%231f6a57%27/%3E%3Crect x=%273%27 y=%2711%27 width=%273%27 height=%272%27 fill=%27%239a2e2e%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-page">
+<main class="login">
+  <p class="login-mark">Progent, taken apart</p>
+  <h1>Least privilege for AI agents, checked by a solver</h1>
+  <form method="post" action="/login" class="login-form">
+    <input type="text" autocomplete="username" value="progent" hidden aria-hidden="true">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+    <!--error-->
+    <button type="submit">Enter</button>
+  </form>
+  <p class="login-note">
+    An interactive companion to
+    <a href="https://arxiv.org/abs/2504.11703"><cite>Progent: Securing AI Agents with Privilege Control</cite></a>.
+    Source on <a href="https://github.com/hriday/progent-lab">GitHub</a>.
+  </p>
+</main>
+</body>
+</html>

@@ -3,15 +3,17 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from html import escape
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import gate, lab, llm, reference, spec_checker
+from . import auth, gate, lab, llm, reference, spec_checker
 from .policy_format import PolicyFormatError, normalize
 from .scenarios import SCENARIOS, public_catalog
 
@@ -43,6 +45,18 @@ async def limit_body(request: Request, call_next):
     if int(request.headers.get("content-length") or 0) > MAX_BODY:
         return JSONResponse({"detail": "request too large"}, status_code=413)
     return await call_next(request)
+
+
+PUBLIC_PATHS = {"/login", "/healthz", "/static/style.css"}
+
+
+@app.middleware("http")
+async def require_login(request: Request, call_next):
+    if not auth.enabled() or request.url.path in PUBLIC_PATHS or auth.valid(request.cookies.get(auth.COOKIE)):
+        return await call_next(request)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "not signed in"}, status_code=401)
+    return RedirectResponse("/login", status_code=303)
 
 
 # --------------------------------------------------------------------------- models
@@ -183,6 +197,34 @@ async def approve(run_id: str, req: ApprovalReq):
     if not run or not run.answer(req.approval_id, req.approved):
         raise HTTPException(409, "no matching pending approval")
     return {"ok": True}
+
+
+def _login_page(error: str | None = None, status: int = 200) -> HTMLResponse:
+    page = (STATIC / "login.html").read_text()
+    if error:
+        page = page.replace("<!--error-->", f'<p class="err" role="alert">{escape(error, quote=False)}</p>')
+    return HTMLResponse(page, status_code=status, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/login")
+async def login_form():
+    return _login_page()
+
+
+@app.post("/login")
+async def login(request: Request):
+    if not auth.enabled():
+        return RedirectResponse("/", status_code=303)
+    client = request.client.host if request.client else "?"
+    if auth.locked_out(client):
+        return _login_page("Too many attempts. Try again in a few minutes.", 429)
+    password = parse_qs((await request.body()).decode(errors="replace")).get("password", [""])[0]
+    if not await auth.check_password(client, password):
+        return _login_page("That password isn't right.", 401)
+    resp = RedirectResponse("/", status_code=303)
+    resp.set_cookie(auth.COOKIE, auth.issue(), max_age=auth.MAX_AGE, httponly=True,
+                    secure=request.url.scheme == "https", samesite="lax")
+    return resp
 
 
 app.mount("/static", StaticFiles(directory=STATIC), name="static")

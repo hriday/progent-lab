@@ -66,8 +66,8 @@ A 1 GB droplet is enough; 2 GB is more comfortable. Ubuntu 24.04.
 4. **Config:**
    ```sh
    cp .env.example .env
-   ./make-password.sh        # prompts for a password, prints the BASIC_AUTH_HASH line
-   nano .env                 # set SITE_DOMAIN, BASIC_AUTH_USER, paste the hash line
+   ./make-password.sh        # prompts for a password, prints the SITE_PASSWORD_HASH line
+   nano .env                 # set SITE_DOMAIN, paste the hash line, SESSION_SECRET=$(openssl rand -hex 32)
    chmod 600 .env
    # The Anthropic key: one line in .key, readable by the container user (uid 10001) only.
    nano .key && chown root:10001 .key && chmod 640 .key
@@ -81,6 +81,9 @@ A 1 GB droplet is enough; 2 GB is more comfortable. Ubuntu 24.04.
    ```
 
 To update, run `docker compose up -d --build` again. To stop, run `docker compose down`.
+
+The site asks for the password on its own login page (no username), then keeps you signed in for
+30 days with a signed cookie. Five wrong attempts from one address lock it out for five minutes.
 
 The app container isn't published on any port; only Caddy (80/443) is. It runs as a non-root user
 on a read-only filesystem with all capabilities dropped.
@@ -127,6 +130,7 @@ ANTHROPIC_API_KEY=... .venv/bin/uvicorn app.main:app --reload --port 8000
 
 ```
 app/main.py           FastAPI routes
+app/auth.py           password gate: bcrypt check, signed session cookie, lockout
 app/reference.py      wrappers around the vendored reference code (no globals, no sys.exit/input)
 app/spec_checker.py   paper-semantics containment checker and Algorithm 2 evaluator
 app/lab.py            Algorithm 3 agent loop, approvers, event stream

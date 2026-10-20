@@ -1,4 +1,5 @@
 anthropic==1.15.0
+bcrypt==5.0.0
 docstring_parser==0.18.0
 fastapi==0.153.0
 jsonschema==4.26.0
