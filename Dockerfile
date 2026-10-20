@@ -10,7 +10,7 @@ COPY app ./app
 COPY vendor ./vendor
 COPY static ./static
 
-RUN useradd --system --no-create-home --uid 10001 app
+RUN groupadd --system --gid 10001 app && useradd --system --no-create-home --uid 10001 --gid 10001 app
 USER app
 
 EXPOSE 8000
