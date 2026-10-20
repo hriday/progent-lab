@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progent, taken apart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%231c2e4a%27/%3E%3Crect x=%273%27 y=%273%27 width=%276%27 height=%273%27 fill=%27%231f6a57%27/%3E%3Crect x=%273%27 y=%277%27 width=%2710%27 height=%273%27 fill=%27%231f6a57%27/%3E%3Crect x=%273%27 y=%2711%27 width=%273%27 height=%272%27 fill=%27%239a2e2e%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="#top">Progent, taken apart</a>
+    <nav aria-label="Sections">
+      <a href="#walkthrough">Walkthrough</a>
+      <a href="#playground">Policy playground</a>
+      <a href="#containment">Containment checker</a>
+      <a href="#lab">Attack lab</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="intro">
+    <h1>Least privilege for AI agents, checked by a solver</h1>
+    <p class="lead">
+      Progent (Shi et al., UC Berkeley, <a href="https://arxiv.org/abs/2504.11703">arXiv 2504.11703</a>) puts a
+      policy between an agent and its tools. Every tool call is checked against symbolic allow/forbid rules over
+      the tool's name and arguments, and anything unmatched is denied.
+    </p>
+    <p>
+      An LLM writes the first policy from the user's task, which is trusted, then proposes updates as tool results
+      arrive, which are not. Z3 classifies each update: a narrowing is applied automatically, an expansion needs
+      approval. The paper calls the result monotonic confinement: the agent's action space can only grow when
+      someone says yes.
+    </p>
+    <p>
+      Everything below runs against a live backend. Decisions labelled <em>reference</em> come from the authors'
+      code at commit <span class="mono" id="commit">5be7b63</span>. Decisions labelled <em>paper semantics</em>
+      come from an independent checker written to the paper's definitions and to how the enforcer actually
+      evaluates JSON Schema.
+    </p>
+    <aside class="finding" aria-labelledby="finding-h">
+      <h2 id="finding-h">The shipped expansion check can fail open</h2>
+      <p>
+        The reference translator from regex to Z3 raises on <code>^</code>, <code>$</code> and <code>\b</code>,
+        and the caller treats any exception as "no counterexample". A current policy with an anchored pattern
+        therefore accepts any proposed update as a narrowing.
+      </p>
+      <p>
+        Separately, Z3 models a pattern as a full match while <code>jsonschema</code> enforces it with
+        <code>re.search</code>. A pattern that looks identical to an exact value admits any string containing it.
+        The containment checker and the attack lab both reproduce this.
+      </p>
+    </aside>
+  </div>
+
+  <!-- ============================================================ walkthrough -->
+  <section class="part" id="walkthrough" aria-labelledby="wt-h">
+    <h2 id="wt-h">Walkthrough: the paper's running example</h2>
+    <p>
+      The user asks the agent to carry out the TODOs in an email from Alice. Only after reading that email does
+      the agent learn it must summarise recent mail and post to Slack. One of those emails tells it to forward the
+      inbox to eve@evil.com. Step through to see the policy gating each call and how each update was classified.
+    </p>
+    <div class="steps" role="group" aria-label="Agent steps">
+      <span id="step-buttons" style="display:contents"></span>
+      <span class="nav">
+        <button class="quiet" id="step-prev" aria-label="Previous step">Back</button>
+        <button class="quiet" id="step-next" aria-label="Next step">Next</button>
+      </span>
+    </div>
+    <div class="stepper">
+      <div class="step-card" id="step-card" aria-live="polite"></div>
+      <div class="map-wrap">
+        <h3>What <span id="map-policy" class="mono">P1</span> allows</h3>
+        <div class="map" id="wt-map"></div>
+        <div class="map-legend" aria-hidden="true">
+          <span><i class="swatch full"></i>any arguments</span>
+          <span><i class="swatch part"></i>constrained arguments</span>
+          <span><i class="swatch ghost-s"></i>proposed, not granted</span>
+          <span><i class="swatch dot"></i>attempted call, blocked</span>
+        </div>
+        <details>
+          <summary>Policy as JSON</summary>
+          <pre id="wt-json"></pre>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ playground -->
+  <section class="part" id="playground" aria-labelledby="pg-h">
+    <h2 id="pg-h">Policy playground</h2>
+    <p>
+      Write a policy in the paper's format (Figure 9) and fire a tool call at it. The reference enforcer and
+      Algorithm 2 are evaluated side by side; when they disagree, the presets explain why.
+    </p>
+    <div class="presets" id="pg-presets" role="group" aria-label="Playground presets"></div>
+    <p class="preset-note" id="pg-note"></p>
+    <div class="two">
+      <div class="well">
+        <div class="well-head"><label for="pg-policy">Policy</label></div>
+        <textarea id="pg-policy" spellcheck="false"></textarea>
+        <div class="err" id="pg-policy-err"></div>
+      </div>
+      <div class="well new">
+        <div class="well-head"><label for="pg-call">Tool call</label></div>
+        <textarea id="pg-call" spellcheck="false" style="min-height:8rem"></textarea>
+        <div class="err" id="pg-call-err"></div>
+        <div><button id="pg-run">Check call</button></div>
+      </div>
+    </div>
+    <div class="result-area" id="pg-result" aria-live="polite"></div>
+  </section>
+
+  <!-- ============================================================ containment -->
+  <section class="part" id="containment" aria-labelledby="cc-h">
+    <h2 id="cc-h">Containment checker</h2>
+    <p>
+      Is every call the new policy allows also allowed by the old one? If so the update is a narrowing and Progent
+      applies it without asking. The paper-semantics checker searches for a call the new policy allows and the old
+      one denies, then replays that call through the real enforcer as evidence.
+    </p>
+    <div class="presets" id="cc-presets" role="group" aria-label="Checker presets"></div>
+    <p class="preset-note" id="cc-note"></p>
+    <div class="two">
+      <div class="well">
+        <div class="well-head"><label for="cc-old">Current policy</label></div>
+        <textarea id="cc-old" spellcheck="false"></textarea>
+        <div class="err" id="cc-old-err"></div>
+      </div>
+      <div class="well new">
+        <div class="well-head"><label for="cc-new">Proposed update</label></div>
+        <textarea id="cc-new" spellcheck="false"></textarea>
+        <div class="err" id="cc-new-err"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:0.8rem"><button id="cc-run">Compare policies</button></div>
+    <div class="result-area" id="cc-result" aria-live="polite"></div>
+  </section>
+
+  <!-- ============================================================ lab -->
+  <section class="part" id="lab" aria-labelledby="lab-h">
+    <h2 id="lab-h">Attack lab</h2>
+    <p>
+      A real agent works in a sandboxed mock workspace while Progent sits between it and the tools. You choose the
+      injection, how expansions are approved, and which implementation does the checking. The policy model uses
+      the reference prompts verbatim.
+    </p>
+    <div id="lab-disabled" class="notice" hidden>
+      The attack lab needs an Anthropic API key on the server. Set <code>ANTHROPIC_API_KEY</code> in
+      <code>.env</code> and restart.
+    </div>
+    <form id="lab-form" class="lab-config">
+      <label class="field">Scenario <select id="lab-scenario"></select></label>
+      <label class="field">Injection <select id="lab-injection"></select></label>
+      <label class="field">When an update expands privileges
+        <select id="lab-approver">
+          <option value="auto-approve">Approve automatically (paper's default runs)</option>
+          <option value="auto-deny">Deny automatically</option>
+          <option value="manual">Ask me</option>
+          <option value="disable-update">Never update the initial policy</option>
+        </select>
+      </label>
+      <label class="field">Checker and enforcer
+        <select id="lab-impl">
+          <option value="reference">Reference implementation (as shipped)</option>
+          <option value="spec">Paper semantics</option>
+        </select>
+      </label>
+      <label class="field">Update gate <select id="lab-gate"></select></label>
+      <label class="field">Policy model <select id="lab-model"></select></label>
+      <label class="check wide"><input type="checkbox" id="lab-generic" checked>
+        Allow read-only tools for every task (the paper's generic policy for AgentDojo)</label>
+      <p class="scenario-blurb wide" id="lab-blurb"></p>
+      <label class="field wide">User task <input type="text" id="lab-task"></label>
+      <label class="field wide">Injected text <span style="color:var(--muted)">({goal} is replaced with the attacker's goal)</span>
+        <textarea id="lab-inject" spellcheck="false"></textarea>
+      </label>
+      <div class="row wide"><button id="lab-run" type="submit">Run agent</button><span id="lab-status" style="color:var(--ink-soft)"></span></div>
+    </form>
+    <div class="lab-run" id="lab-run-area" hidden>
+      <div>
+        <div id="lab-approval"></div>
+        <div class="timeline" id="lab-timeline" aria-live="polite"></div>
+      </div>
+      <aside class="lab-side" aria-label="Current policy">
+        <div id="lab-outcome"></div>
+        <h3 style="margin:0;font-size:1rem;font-weight:500">What the current policy allows</h3>
+        <div class="map" id="lab-map"></div>
+        <details><summary>Current policy as JSON</summary><pre id="lab-json"></pre></details>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>
+    Paper: Tianneng Shi, Jingxuan He, Zhun Wang, Hongwei Li, Linyu Wu, Wenbo Guo, Dawn Song, "Progent: Securing AI
+    Agents with Privilege Control", arXiv:2504.11703v3. Reference code:
+    <a href="https://github.com/sunblaze-ucb/progent">sunblaze-ucb/progent</a> (MIT), vendored unmodified.
+  </p>
+  <p>The mock workspaces never send mail, money or HTTP requests; attacker success is judged from the calls that executed.</p>
+</footer>
+<script src="/static/app.js" type="module"></script>
+</body>
+</html>
